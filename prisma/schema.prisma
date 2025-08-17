@@ -33,19 +33,21 @@ generator client {
 }
 
 model User {
-  id         String   @id @default(cuid())
-  email      String   @unique
-  name       String?
-  image      String?
-  createdAt  DateTime @default(now())
-  memberships Membership[]
-  apiKeys    ApiKey[]
+  id               String       @id @default(cuid())
+  email            String       @unique
+  name             String?
+  image            String?
+  createdAt        DateTime     @default(now())
+  memberships      Membership[]
+  draftReplies     DraftReply[] @relation("DraftReplyCreatedBy")
+  publishedReplies Reply[]      @relation("ReplyPublishedBy")
+  auditLogs        AuditLog[]   @relation("AuditLogActor")
 }
 
 model Org {
-  id           String        @id @default(cuid())
+  id           String             @id @default(cuid())
   name         String
-  createdAt    DateTime      @default(now())
+  createdAt    DateTime           @default(now())
   memberships  Membership[]
   locations    Location[]
   templates    Template[]
@@ -53,6 +55,9 @@ model Org {
   rules        EscalationRule[]
   subs         Subscription?
   auditLogs    AuditLog[]
+  integrations Integration[]
+  campaigns    OutreachCampaign[]
+  apiKeys      ApiKey[]
 }
 
 model Membership {
@@ -62,141 +67,144 @@ model Membership {
   orgId  String
   user   User   @relation(fields: [userId], references: [id])
   org    Org    @relation(fields: [orgId], references: [id])
+
   @@unique([userId, orgId])
 }
 
 model Location {
-  id              String   @id @default(cuid())
-  orgId           String
-  name            String
-  address         String?
-  phone           String?
-  timezone        String   @default("Europe/London")
+  id               String        @id @default(cuid())
+  orgId            String
+  name             String
+  address          String?
+  phone            String?
+  timezone         String        @default("Europe/London")
   googleLocationId String?
-  facebookPageId  String?
-  createdAt       DateTime @default(now())
-  org             Org      @relation(fields: [orgId], references: [id])
-  integrations    Integration[]
-  reviews         Review[]
+  facebookPageId   String?
+  createdAt        DateTime      @default(now())
+  org              Org           @relation(fields: [orgId], references: [id])
+  integrations     Integration[]
+  reviews          Review[]
 }
 
 model Integration {
-  id         String   @id @default(cuid())
-  orgId      String
-  locationId String?
-  provider   Provider
+  id           String    @id @default(cuid())
+  orgId        String
+  locationId   String?
+  provider     Provider
   accessToken  String
   refreshToken String?
   expiresAt    DateTime?
   scopes       String[]
   meta         Json?
-  createdAt    DateTime @default(now())
-  org          Org      @relation(fields: [orgId], references: [id])
+  createdAt    DateTime  @default(now())
+  org          Org       @relation(fields: [orgId], references: [id])
   location     Location? @relation(fields: [locationId], references: [id])
 }
 
 model Review {
-  id           String   @id @default(cuid())
-  provider     Provider
-  externalId   String   // provider review id
-  locationId   String
-  rating       Int
-  title        String?
-  text         String
-  languageCode String?
-  authorName   String?
-  authorUrl    String?
-  publishedAt  DateTime
-  updatedAt    DateTime
-  hasOwnerReply Boolean  @default(false)
-  ownerReplyAt  DateTime?
+  id             String       @id @default(cuid())
+  provider       Provider
+  externalId     String // provider review id
+  locationId     String
+  rating         Int
+  title          String?
+  text           String
+  languageCode   String?
+  authorName     String?
+  authorUrl      String?
+  publishedAt    DateTime
+  updatedAt      DateTime
+  hasOwnerReply  Boolean      @default(false)
+  ownerReplyAt   DateTime?
   ownerReplyText String?
-  labels       String[]  // keywords like "refund" or "safety"
-  location     Location  @relation(fields: [locationId], references: [id])
-  drafts       DraftReply[]
-  replies      Reply[]
+  labels         String[] // keywords like "refund" or "safety"
+  location       Location     @relation(fields: [locationId], references: [id])
+  drafts         DraftReply[]
+  replies        Reply[]
+
   @@unique([provider, externalId])
 }
 
 model DraftReply {
-  id          String      @id @default(cuid())
-  reviewId    String
-  status      DraftStatus @default(DRAFT)
-  content     String
+  id            String      @id @default(cuid())
+  reviewId      String
+  status        DraftStatus @default(DRAFT)
+  content       String
   toneProfileId String?
-  createdById String?
-  createdAt   DateTime    @default(now())
-  updatedAt   DateTime    @default(now())
-  violations  Json?       // policy flags
-  review      Review      @relation(fields: [reviewId], references: [id])
-  createdBy   User?       @relation(fields: [createdById], references: [id])
+  createdById   String?
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @default(now())
+  violations    Json? // policy flags
+  review        Review      @relation(fields: [reviewId], references: [id])
+  createdBy     User?       @relation("DraftReplyCreatedBy", fields: [createdById], references: [id])
 }
 
 model Reply {
-  id           String   @id @default(cuid())
-  reviewId     String
-  content      String
-  publishedAt  DateTime?
+  id              String    @id @default(cuid())
+  reviewId        String
+  content         String
+  publishedAt     DateTime?
   providerReplyId String?
-  publishedById String?
-  review       Review   @relation(fields: [reviewId], references: [id])
-  publishedBy  User?    @relation(fields: [publishedById], references: [id])
+  publishedById   String?
+  review          Review    @relation(fields: [reviewId], references: [id])
+  publishedBy     User?     @relation("ReplyPublishedBy", fields: [publishedById], references: [id])
 }
 
 model Template {
-  id        String  @id @default(cuid())
-  orgId     String
-  name      String
-  minStars  Int?
-  maxStars  Int?
-  content   String   // markdown with tokens like {{business_name}} {{issue}} {{next_step}}
-  org       Org      @relation(fields: [orgId], references: [id])
+  id       String @id @default(cuid())
+  orgId    String
+  name     String
+  minStars Int?
+  maxStars Int?
+  content  String // markdown with tokens like {{business_name}} {{issue}} {{next_step}}
+  org      Org    @relation(fields: [orgId], references: [id])
 }
 
 model ToneProfile {
-  id        String  @id @default(cuid())
-  orgId     String
-  name      String
-  settings  Json    // {warmth:0..1, formality:0..1, apologyStyle:"brief|full", signoff:"Best regards, {{business_name}}"}
-  bannedPhrases String[]
+  id              String   @id @default(cuid())
+  orgId           String
+  name            String
+  settings        Json // {warmth:0..1, formality:0..1, apologyStyle:"brief|full", signoff:"Best regards, {{business_name}}"}
+  bannedPhrases   String[]
   requiredPhrases String[]
-  org       Org    @relation(fields: [orgId], references: [id])
+  org             Org      @relation(fields: [orgId], references: [id])
 }
 
 model EscalationRule {
-  id        String  @id @default(cuid())
-  orgId     String
-  name      String
-  maxStars  Int?    // apply when rating <= maxStars
-  keywords  String[]
-  holdPublish Boolean @default(true)
+  id           String   @id @default(cuid())
+  orgId        String
+  name         String
+  maxStars     Int? // apply when rating <= maxStars
+  keywords     String[]
+  holdPublish  Boolean  @default(true)
   notifyEmails String[]
-  org       Org     @relation(fields: [orgId], references: [id])
+  org          Org      @relation(fields: [orgId], references: [id])
 }
 
 model OutreachCampaign {
-  id        String  @id @default(cuid())
-  orgId     String
-  name      String
-  channel   String   // sms or email
-  message   String   // no incentives, no gating language
-  schedule  String?  // cron string
-  active    Boolean  @default(false)
-  org       Org      @relation(fields: [orgId], references: [id])
+  id       String        @id @default(cuid())
+  orgId    String
+  name     String
+  channel  String // sms or email
+  message  String // no incentives, no gating language
+  schedule String? // cron string
+  active   Boolean       @default(false)
+  org      Org           @relation(fields: [orgId], references: [id])
+  logs     OutreachLog[]
 }
 
 model OutreachLog {
-  id        String  @id @default(cuid())
+  id         String           @id @default(cuid())
   campaignId String
-  contact    String   // phone or email, hashed if needed
-  status     String   // sent, delivered, bounced
-  createdAt  DateTime @default(now())
+  contact    String // phone or email, hashed if needed
+  status     String // sent, delivered, bounced
+  createdAt  DateTime         @default(now())
   campaign   OutreachCampaign @relation(fields: [campaignId], references: [id])
 }
 
 model Job {
-  id        String  @id @default(cuid())
-  type      String  // fetchReviews, draftReplies, publishReply, weeklyReport
+  id        String   @id @default(cuid())
+  type      String // fetchReviews, draftReplies, publishReply, weeklyReport
   payload   Json
   runAt     DateTime @default(now())
   attempts  Int      @default(0)
@@ -206,33 +214,33 @@ model Job {
 }
 
 model AuditLog {
-  id        String  @id @default(cuid())
+  id        String   @id @default(cuid())
   orgId     String
   actorId   String?
   action    String
   target    String?
   meta      Json?
   createdAt DateTime @default(now())
-  org       Org     @relation(fields: [orgId], references: [id])
-  actor     User?    @relation(fields: [actorId], references: [id])
+  org       Org      @relation(fields: [orgId], references: [id])
+  actor     User?    @relation("AuditLogActor", fields: [actorId], references: [id])
 }
 
 model Subscription {
-  id              String   @id @default(cuid())
-  orgId           String   @unique
-  plan            String   // basic pro multi
-  status          String   // active past_due canceled
+  id               String   @id @default(cuid())
+  orgId            String   @unique
+  plan             String // basic pro multi
+  status           String // active past_due canceled
   stripeCustomerId String?
-  stripeSubId     String?
-  createdAt       DateTime @default(now())
-  org             Org      @relation(fields: [orgId], references: [id])
+  stripeSubId      String?
+  createdAt        DateTime @default(now())
+  org              Org      @relation(fields: [orgId], references: [id])
 }
 
 model ApiKey {
-  id        String  @id @default(cuid())
+  id        String   @id @default(cuid())
   orgId     String
   name      String
-  secret    String  @unique
+  secret    String   @unique
   createdAt DateTime @default(now())
-  org       Org     @relation(fields: [orgId], references: [id])
+  org       Org      @relation(fields: [orgId], references: [id])
 }
