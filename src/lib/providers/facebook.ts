@@ -1,5 +1,13 @@
-import { Location } from '@prisma/client'
-import { ReviewsProvider } from './google'
+import { ReviewsProvider, type ProviderLocation } from './google'
+
+type FacebookRating = {
+  id: string
+  rating: number
+  review_text?: string
+  reviewer?: { name?: string }
+  created_time: string
+  updated_time?: string
+}
 
 export class FacebookProvider implements ReviewsProvider {
   private accessToken: string
@@ -8,7 +16,7 @@ export class FacebookProvider implements ReviewsProvider {
     this.accessToken = accessToken
   }
 
-  async listReviews(location: Location, since?: Date): Promise<import('./google').ReviewIn[]> {
+  async listReviews(location: ProviderLocation, _since?: Date): Promise<import('./google').ReviewIn[]> {
     if (!location.facebookPageId) {
       throw new Error('Facebook page ID not configured')
     }
@@ -23,9 +31,9 @@ export class FacebookProvider implements ReviewsProvider {
         throw new Error(`Facebook API error: ${response.status}`)
       }
 
-      const data = await response.json()
+      const data = await response.json() as { data?: FacebookRating[] }
       
-      return data.data?.map((rating: any) => ({
+      return data.data?.map((rating: FacebookRating) => ({
         provider: 'FACEBOOK' as const,
         externalId: rating.id,
         rating: rating.rating,
@@ -41,7 +49,7 @@ export class FacebookProvider implements ReviewsProvider {
     }
   }
 
-  async postReply(location: Location, reviewExternalId: string, text: string): Promise<{ providerReplyId: string }> {
+  async postReply(location: ProviderLocation, reviewExternalId: string, text: string): Promise<{ providerReplyId: string }> {
     if (!location.facebookPageId) {
       throw new Error('Facebook page ID not configured')
     }
@@ -66,7 +74,7 @@ export class FacebookProvider implements ReviewsProvider {
         throw new Error(`Facebook API error: ${response.status}`)
       }
 
-      const data = await response.json()
+      const data = await response.json() as { id: string }
       return { providerReplyId: data.id }
     } catch (error) {
       console.error('Error posting Facebook reply:', error)
@@ -85,7 +93,7 @@ export class FacebookProvider implements ReviewsProvider {
     return `https://www.facebook.com/v18.0/dialog/oauth?${params.toString()}`
   }
 
-  async exchangeCode(code: string): Promise<{ accessToken: string, refreshToken?: string, expiresAt?: Date, scopes: string[] }> {
+  async exchangeCode(_code: string): Promise<{ accessToken: string, refreshToken?: string, expiresAt?: Date, scopes: string[] }> {
     try {
       const response = await fetch('https://graph.facebook.com/v18.0/oauth/access_token', {
         method: 'GET',
@@ -98,7 +106,7 @@ export class FacebookProvider implements ReviewsProvider {
         throw new Error(`Facebook OAuth error: ${response.status}`)
       }
 
-      const data = await response.json()
+      const data = await response.json() as { access_token: string; expires_in?: number; scope?: string }
       
       return {
         accessToken: data.access_token,

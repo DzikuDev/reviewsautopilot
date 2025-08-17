@@ -167,7 +167,7 @@ export class PolicyGuard {
 
   static sanitizeContent(content: string): string {
     // Remove PII patterns
-    let sanitized = content
+    const sanitized = content
       .replace(/\b\d{3}[-.]?\d{3}[-.]?\d{4}\b/g, '[PHONE]')
       .replace(/\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b/g, '[EMAIL]')
       .replace(/\b[A-Z]{2}\d{2}[A-Z0-9]{10,30}\b/g, '[IBAN]')

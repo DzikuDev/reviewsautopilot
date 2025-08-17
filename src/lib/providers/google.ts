@@ -1,4 +1,7 @@
-import { Location } from '@prisma/client'
+export type ProviderLocation = {
+  googleLocationId?: string | null
+  facebookPageId?: string | null
+}
 
 export type ReviewIn = {
   provider: 'GOOGLE' | 'FACEBOOK'
@@ -12,11 +15,23 @@ export type ReviewIn = {
 }
 
 export interface ReviewsProvider {
-  listReviews: (location: Location, since?: Date) => Promise<ReviewIn[]>
-  postReply: (location: Location, reviewExternalId: string, text: string) => Promise<{ providerReplyId: string }>
+  listReviews: (location: ProviderLocation, since?: Date) => Promise<ReviewIn[]>
+  postReply: (location: ProviderLocation, reviewExternalId: string, text: string) => Promise<{ providerReplyId: string }>
   getAuthUrl?: () => string
   exchangeCode?: (code: string) => Promise<{ accessToken: string, refreshToken?: string, expiresAt?: Date, scopes: string[] }>
 }
+
+type GoogleReview = {
+  name: string
+  starRating: number
+  comment?: string
+  reviewer?: { profilePhotoUri?: string; displayName?: string }
+  languageCode?: string
+  createTime: string
+  updateTime: string
+}
+
+type GoogleReplyResponse = { name: string }
 
 export class GoogleBusinessProvider implements ReviewsProvider {
   private accessToken: string
@@ -29,7 +44,7 @@ export class GoogleBusinessProvider implements ReviewsProvider {
     this.expiresAt = expiresAt
   }
 
-  async listReviews(location: Location, since?: Date): Promise<ReviewIn[]> {
+  async listReviews(location: ProviderLocation, since?: Date): Promise<ReviewIn[]> {
     if (!location.googleLocationId) {
       throw new Error('Google location ID not configured')
     }
@@ -54,11 +69,11 @@ export class GoogleBusinessProvider implements ReviewsProvider {
         throw new Error(`Google API error: ${response.status}`)
       }
 
-      const data = await response.json()
+      const data = await response.json() as { reviews?: GoogleReview[] }
       
-      return data.reviews?.map((review: any) => ({
+      return data.reviews?.map((review: GoogleReview) => ({
         provider: 'GOOGLE' as const,
-        externalId: review.name.split('/').pop(),
+        externalId: review.name.split('/').pop() as string,
         rating: review.starRating,
         text: review.comment || '',
         authorName: review.reviewer?.profilePhotoUri ? review.reviewer.displayName : undefined,
@@ -72,7 +87,7 @@ export class GoogleBusinessProvider implements ReviewsProvider {
     }
   }
 
-  async postReply(location: Location, reviewExternalId: string, text: string): Promise<{ providerReplyId: string }> {
+  async postReply(location: ProviderLocation, reviewExternalId: string, text: string): Promise<{ providerReplyId: string }> {
     if (!location.googleLocationId) {
       throw new Error('Google location ID not configured')
     }
@@ -101,8 +116,8 @@ export class GoogleBusinessProvider implements ReviewsProvider {
         throw new Error(`Google API error: ${response.status}`)
       }
 
-      const data = await response.json()
-      return { providerReplyId: data.name.split('/').pop() }
+      const data = await response.json() as GoogleReplyResponse
+      return { providerReplyId: data.name.split('/').pop() as string }
     } catch (error) {
       console.error('Error posting Google reply:', error)
       throw error
@@ -142,7 +157,7 @@ export class GoogleBusinessProvider implements ReviewsProvider {
         throw new Error(`Google OAuth error: ${response.status}`)
       }
 
-      const data = await response.json()
+      const data = await response.json() as { access_token: string; refresh_token?: string; expires_in?: number; scope?: string }
       
       return {
         accessToken: data.access_token,
@@ -179,7 +194,7 @@ export class GoogleBusinessProvider implements ReviewsProvider {
         throw new Error(`Google OAuth refresh error: ${response.status}`)
       }
 
-      const data = await response.json()
+      const data = await response.json() as { access_token: string; expires_in?: number }
       this.accessToken = data.access_token
       this.expiresAt = data.expires_in ? new Date(Date.now() + data.expires_in * 1000) : undefined
     } catch (error) {

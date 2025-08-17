@@ -4,9 +4,24 @@
 // Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
 // Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
 
-enum Provider { GOOGLE FACEBOOK }
-enum DraftStatus { DRAFT APPROVED REJECTED PUBLISHED NEEDS_REVIEW }
-enum Role { OWNER ADMIN MEMBER }
+enum Provider {
+  GOOGLE
+  FACEBOOK
+}
+
+enum DraftStatus {
+  DRAFT
+  APPROVED
+  REJECTED
+  PUBLISHED
+  NEEDS_REVIEW
+}
+
+enum Role {
+  OWNER
+  ADMIN
+  MEMBER
+}
 
 datasource db {
   provider = "postgresql"
