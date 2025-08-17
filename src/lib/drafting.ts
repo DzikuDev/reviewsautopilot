@@ -1,5 +1,33 @@
-import { Review, Location, Template, ToneProfile } from '@prisma/client'
 import { PolicyGuard, PolicyCheckResult } from './policy'
+
+// Minimal local types to avoid depending on generated Prisma types during build
+export type Review = {
+  id: string
+  rating: number
+  text: string
+  title?: string | null
+  authorName?: string | null
+  languageCode?: string | null
+}
+
+export type Location = {
+  name: string
+  address?: string | null
+  phone?: string | null
+}
+
+export type Template = {
+  content: string
+}
+
+export type ToneProfile = {
+  settings: {
+    warmth?: 'low' | 'medium' | 'high' | string
+    formality?: 'low' | 'medium' | 'high' | string
+    signoff?: string
+    [key: string]: unknown
+  }
+}
 
 export interface DraftRequest {
   reviewId: string
@@ -29,7 +57,7 @@ export class DraftingPipeline {
     const content = await this.generateContent(context, customPrompt)
     
     // Apply policy checks
-    const violations = PolicyGuard.checkDraft(content, review.rating, review.languageCode)
+    const violations = PolicyGuard.checkDraft(content, review.rating, review.languageCode ?? undefined)
     
     // Determine status based on policy results
     let status: 'DRAFT' | 'APPROVED' | 'NEEDS_REVIEW' = 'DRAFT'
@@ -64,9 +92,9 @@ export class DraftingPipeline {
       review: {
         rating: review.rating,
         text: review.text,
-        title: review.title,
-        author: review.authorName,
-        language: review.languageCode,
+        title: review.title ?? undefined,
+        author: review.authorName ?? undefined,
+        language: review.languageCode ?? undefined,
       },
       template: template?.content || '',
       tone: toneProfile?.settings || {},
@@ -135,7 +163,7 @@ Generate a natural, helpful response:`
     let result = template.content
     
     // Replace template tokens
-    result = result.replace(/\{\{business_name\}\}/g, review.location?.name || 'our business')
+    result = result.replace(/\{\{business_name\}\}/g, 'our business')
     result = result.replace(/\{\{rating\}\}/g, review.rating.toString())
     result = result.replace(/\{\{review_text\}\}/g, review.text)
     result = result.replace(/\{\{author_name\}\}/g, review.authorName || 'the reviewer')

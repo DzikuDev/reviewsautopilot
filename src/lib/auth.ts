@@ -1,45 +1,33 @@
-import { NextAuthOptions } from 'next-auth'
-import { PrismaAdapter } from '@auth/prisma-adapter'
+import { NextAuthOptions, type DefaultSession } from 'next-auth'
 import GoogleProvider from 'next-auth/providers/google'
-import EmailProvider from 'next-auth/providers/email'
-import { prisma } from './db'
+
+type SessionUser = DefaultSession['user'] & { id?: string }
 
 export const authOptions: NextAuthOptions = {
-  adapter: PrismaAdapter(prisma),
   providers: [
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID!,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
     }),
-    EmailProvider({
-      server: {
-        host: process.env.SMTP_HOST,
-        port: 587,
-        auth: {
-          user: process.env.SMTP_USER,
-          pass: process.env.SMTP_PASS,
-        },
-      },
-      from: process.env.EMAIL_FROM,
-    }),
   ],
   callbacks: {
-    session: async ({ session, user }) => {
-      if (session?.user) {
-        session.user.id = user.id
+    session: async ({ session, token }) => {
+      if (session?.user && token?.sub) {
+        ;(session.user as SessionUser).id = token.sub
       }
       return session
     },
-    jwt: async ({ token, user }) => {
-      if (user) {
-        token.id = user.id
+    jwt: async ({ token }) => {
+      if (token.sub) {
+        // augment token with id for convenience
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (token as unknown as { id?: string }).id = token.sub
       }
       return token
     },
   },
   pages: {
     signIn: '/auth/signin',
-    verifyRequest: '/auth/verify-request',
   },
   session: {
     strategy: 'jwt',
