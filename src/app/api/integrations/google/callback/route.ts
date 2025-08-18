@@ -21,8 +21,12 @@ export async function GET(req: Request) {
   const { accessToken, refreshToken, expiresAt, scopes } = await provider.exchangeCode(code)
 
   // ensure the user has an org
-  const userId = (session.user as any).id as string
-  let membership = await prisma.membership.findFirst({ where: { userId } })
+  const userId = typeof session.user?.id === 'string' ? session.user.id : undefined
+  if (!userId) {
+    return NextResponse.json({ error: 'No user id on session' }, { status: 400 })
+  }
+
+  const membership = await prisma.membership.findFirst({ where: { userId } })
   let orgId: string
   if (!membership) {
     const org = await prisma.org.create({ data: { name: `${session.user?.name || 'My'} Organization` } })

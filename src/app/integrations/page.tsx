@@ -19,8 +19,8 @@ export default async function IntegrationsPage() {
     )
   }
 
-  const userId = (session.user as any).id as string
-  const membership = await prisma.membership.findFirst({ where: { userId } })
+  const userId = typeof session.user?.id === 'string' ? session.user.id : undefined
+  const membership = userId ? await prisma.membership.findFirst({ where: { userId } }) : null
   const orgId = membership?.orgId
   const integrations = orgId ? await prisma.integration.findMany({ where: { orgId } }) : []
 
