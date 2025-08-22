@@ -1,30 +1,33 @@
-import type { Metadata } from "next";
-import { Inter } from "next/font/google";
-import "./globals.css";
-import { AuthProvider } from "@/components/providers/AuthProvider";
-import { PostHogProvider } from "@/components/providers/PostHogProvider";
+import type { Metadata } from 'next'
+import { Inter } from 'next/font/google'
+import './globals.css'
+import { AuthProvider } from '@/components/providers/AuthProvider'
+import { PostHogProvider } from '@/components/providers/PostHogProvider'
+import { ThemeProvider } from '@/components/providers/ThemeProvider'
 
-const inter = Inter({ subsets: ["latin"] });
+const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
-  title: "Reviews Autopilot - Manage Your Business Reviews",
-  description: "Automate review management, generate AI-powered responses, and maintain your online reputation across Google and Facebook.",
-};
+  title: 'Reviews Autopilot',
+  description: 'AI-powered review management platform',
+}
 
 export default function RootLayout({
   children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
+}: {
+  children: React.ReactNode
+}) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <body className={inter.className}>
-        <PostHogProvider>
+        <ThemeProvider>
           <AuthProvider>
-            {children}
+            <PostHogProvider>
+              {children}
+            </PostHogProvider>
           </AuthProvider>
-        </PostHogProvider>
+        </ThemeProvider>
       </body>
     </html>
-  );
+  )
 }
