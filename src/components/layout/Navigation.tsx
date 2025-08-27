@@ -4,7 +4,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { ThemeToggle } from '@/components/ui/theme-toggle'
-import { Sparkles, Building2, MessageSquare, FileText, Settings } from 'lucide-react'
+import { Sparkles, Building2, MessageSquare, FileText, Settings, RefreshCw } from 'lucide-react'
 
 const navigation = [
   { name: 'Dashboard', href: '/', icon: Sparkles },
@@ -12,6 +12,7 @@ const navigation = [
   { name: 'Drafts', href: '/drafts', icon: FileText },
   { name: 'Templates', href: '/templates', icon: Building2 },
   { name: 'Tone Profiles', href: '/tone-profiles', icon: Settings },
+  { name: 'Integrations', href: '/integrations', icon: RefreshCw },
 ]
 
 export function Navigation() {

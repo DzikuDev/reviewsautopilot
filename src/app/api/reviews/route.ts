@@ -25,31 +25,64 @@ export async function GET(request: NextRequest) {
       const mockReviews = [
         {
           id: '1',
+          provider: 'GOOGLE',
           rating: 5,
-          text: 'Amazing service! The team was incredibly helpful and professional.',
-          authorName: 'John Smith',
-          publishedAt: new Date().toISOString(),
+          text: 'Amazing service! The team was incredibly helpful and professional throughout the entire process.',
+          title: 'Excellent Experience',
+          authorName: 'Sarah Johnson',
+          publishedAt: new Date(Date.now() - 86400000).toISOString(),
+          hasOwnerReply: true,
           location: { name: 'Downtown Office' },
+          drafts: [
+            {
+              id: 'draft-1',
+              status: 'APPROVED',
+              content: 'Thank you for your wonderful feedback, Sarah!'
+            }
+          ],
+          replies: [
+            {
+              id: 'reply-1',
+              content: 'Thank you for your wonderful feedback, Sarah!',
+              publishedAt: new Date(Date.now() - 43200000).toISOString()
+            }
+          ],
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString()
         },
         {
           id: '2',
+          provider: 'FACEBOOK',
           rating: 4,
-          text: 'Great experience overall. Would definitely recommend to others.',
-          authorName: 'Sarah Johnson',
-          publishedAt: new Date(Date.now() - 86400000).toISOString(),
+          text: 'Great experience overall. Staff was friendly and helpful.',
+          title: 'Good Service',
+          authorName: 'John Smith',
+          publishedAt: new Date(Date.now() - 172800000).toISOString(),
+          hasOwnerReply: false,
           location: { name: 'Downtown Office' },
+          drafts: [
+            {
+              id: 'draft-2',
+              status: 'DRAFT',
+              content: 'Thank you for your feedback, John!'
+            }
+          ],
+          replies: [],
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString()
         },
         {
           id: '3',
+          provider: 'GOOGLE',
           rating: 3,
           text: 'Good service but could be improved in some areas.',
+          title: 'Decent Experience',
           authorName: 'Mike Wilson',
-          publishedAt: new Date(Date.now() - 172800000).toISOString(),
+          publishedAt: new Date(Date.now() - 259200000).toISOString(),
+          hasOwnerReply: false,
           location: { name: 'Downtown Office' },
+          drafts: [],
+          replies: [],
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString()
         }

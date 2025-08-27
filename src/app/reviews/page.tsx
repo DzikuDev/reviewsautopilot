@@ -81,10 +81,12 @@ export default function ReviewsPage() {
       if (!response.ok) throw new Error('Failed to fetch reviews')
 
       const data: ReviewsResponse = await response.json()
-      setReviews(data.reviews)
-      setPagination(data.pagination)
+      setReviews(data.reviews || []) // Ensure reviews is always an array
+      setPagination(data.pagination || { page: 1, limit: 20, total: 0, pages: 0 })
     } catch (error) {
       console.error('Error fetching reviews:', error)
+      setReviews([]) // Set empty array on error
+      setPagination({ page: 1, limit: 20, total: 0, pages: 0 })
     } finally {
       setLoading(false)
     }
@@ -199,7 +201,7 @@ export default function ReviewsPage() {
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
               <p className="text-lg text-gray-600 dark:text-gray-300">Loading reviews...</p>
             </div>
-          ) : reviews.length === 0 ? (
+          ) : !Array.isArray(reviews) || reviews.length === 0 ? (
             <Card className="glass card-hover">
               <CardContent className="text-center py-16">
                 <MessageSquare className="w-16 h-16 text-gray-400 dark:text-gray-500 mx-auto mb-6" />
@@ -222,7 +224,7 @@ export default function ReviewsPage() {
             </Card>
           ) : (
             <div className="space-y-6">
-              {reviews.map((review) => (
+              {Array.isArray(reviews) && reviews.map((review) => (
                 <Card key={review.id} className="glass card-hover">
                   <CardContent className="p-6">
                     <div className="flex items-start justify-between">
@@ -240,7 +242,7 @@ export default function ReviewsPage() {
                                 {new Date(review.publishedAt).toLocaleDateString()}
                               </span>
                             </div>
-                            <div className="text-sm text-gray-600 dark:text-gray-400">{review.location.name}</div>
+                            <div className="text-sm text-gray-600 dark:text-gray-400">{review.location?.name || 'Unknown Location'}</div>
                           </div>
                         </div>
                         
@@ -268,7 +270,7 @@ export default function ReviewsPage() {
                                 Replied
                               </Badge>
                             )}
-                            {review.drafts.length > 0 && (
+                            {review.drafts && review.drafts.length > 0 && (
                               <Badge variant="outline" className="border-blue-200 dark:border-blue-700 text-blue-700 dark:text-blue-300">
                                 {review.drafts.length} Draft{review.drafts.length !== 1 ? 's' : ''}
                               </Badge>
