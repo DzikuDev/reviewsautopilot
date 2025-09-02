@@ -196,3 +196,5 @@ npx prisma --version
 
 **🎯 Ready to proceed? Let me know when PostgreSQL installation is complete and I'll help you with the next steps!**
 
+
+

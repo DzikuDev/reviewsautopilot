@@ -5,35 +5,36 @@ import { prisma } from '@/lib/db'
 
 export async function GET(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions)
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
+    // TEMPORARILY DISABLED AUTH FOR TESTING
+    // const session = await getServerSession(authOptions)
+    // if (!session?.user?.id) {
+    //   return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    // }
 
-    // Get user's organization
-    const membership = await prisma.membership.findFirst({
-      where: { userId: session.user.id },
-      include: { 
-        org: { 
-          include: { 
+    // For testing, return all organizations
+    const orgs = await prisma.org.findMany({
+      include: {
+        locations: true,
+        memberships: {
+          include: { user: true }
+        },
+        _count: {
+          select: {
+            memberships: true,
             locations: true,
-            memberships: {
-              include: { user: true }
-            }
-          } 
-        } 
-      }
+            templates: true,
+            toneProfiles: true
+          }
+        }
+      },
+      orderBy: { createdAt: 'desc' }
     })
 
-    if (!membership) {
-      return NextResponse.json({ error: 'No organization found' }, { status: 404 })
-    }
-
-    return NextResponse.json({ org: membership.org })
+    return NextResponse.json({ orgs })
   } catch (error) {
-    console.error('Error fetching organization:', error)
+    console.error('Error fetching organizations:', error)
     return NextResponse.json(
-      { error: 'Failed to fetch organization' },
+      { error: 'Failed to fetch organizations' },
       { status: 500 }
     )
   }
@@ -62,15 +63,6 @@ export async function POST(request: NextRequest) {
       }
     })
 
-    // Check if user already has an organization (disabled for testing)
-    // const existingMembership = await prisma.membership.findFirst({
-    //   where: { userId: testUser.id }
-    // })
-
-    // if (existingMembership) {
-    //   return NextResponse.json({ error: 'User already belongs to an organization' }, { status: 400 })
-    // }
-
     // Create organization and add user as owner
     const org = await prisma.org.create({
       data: {
@@ -89,6 +81,7 @@ export async function POST(request: NextRequest) {
       }
     })
 
+    console.log('✅ Organization created successfully:', org.id)
     return NextResponse.json({ org }, { status: 201 })
   } catch (error) {
     console.error('Error creating organization:', error)

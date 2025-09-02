@@ -12,6 +12,7 @@
     "test:types": "node scripts/test-app.js --types",
     "test:build": "node scripts/test-app.js --build",
     "test:dev": "node scripts/test-app.js --dev",
+    "test:db": "node scripts/test-database.js",
     "setup": "node scripts/setup-db.js",
     "setup:local": "node scripts/setup-local-db.js",
     "verify:db": "node scripts/verify-db.js",

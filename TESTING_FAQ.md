@@ -146,3 +146,5 @@ cat TESTING_CHECKLIST.md
 
 **🎉 Bottom Line: You can thoroughly test 80% of your app for FREE right now! Start with the free testing, then add paid services as needed.**
 
+
+

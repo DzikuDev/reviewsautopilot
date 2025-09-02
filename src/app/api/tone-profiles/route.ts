@@ -20,48 +20,58 @@ export async function GET(request: NextRequest) {
     const limit = parseInt(searchParams.get('limit') || '20')
     const offset = (page - 1) * limit
 
-    // For testing, return mock data instead of database queries
+    // Use real database queries for testing
     if (BYPASS_AUTH) {
-      const mockToneProfiles = [
-        {
-          id: '1',
-          name: 'Friendly & Professional',
-          description: 'Warm and approachable while maintaining business professionalism',
-          settings: {
-            formality: 'friendly',
-            emotion: 'positive',
-            length: 'medium',
-            personality: 'warm, helpful, solution-oriented'
-          },
-          isActive: true,
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-          createdBy: { name: 'Test User', email: 'test@example.com' }
-        },
-        {
-          id: '2',
-          name: 'Empathetic & Caring',
-          description: 'Show understanding and care for customer concerns',
-          settings: {
-            formality: 'casual',
-            emotion: 'empathetic',
-            length: 'medium',
-            personality: 'understanding, caring, supportive'
-          },
-          isActive: true,
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-          createdBy: { name: 'Test User', email: 'test@example.com' }
-        }
-      ]
+      // Create a test user and org if they don't exist
+      let testUser = await prisma.user.findFirst({
+        where: { email: 'test@example.com' }
+      })
+      
+      if (!testUser) {
+        testUser = await prisma.user.create({
+          data: {
+            email: 'test@example.com',
+            name: 'Test User'
+          }
+        })
+      }
+
+      let testOrg = await prisma.org.findFirst({
+        where: { name: 'Test Organization' }
+      })
+
+      if (!testOrg) {
+        testOrg = await prisma.org.create({
+          data: {
+            name: 'Test Organization',
+            memberships: {
+              create: {
+                userId: testUser.id,
+                role: 'OWNER'
+              }
+            }
+          }
+        })
+      }
+
+      // Fetch tone profiles with pagination
+      const [toneProfiles, total] = await Promise.all([
+        prisma.toneProfile.findMany({
+          where: { orgId: testOrg.id },
+          orderBy: { createdAt: 'desc' },
+          skip: offset,
+          take: limit
+        }),
+        prisma.toneProfile.count({ where: { orgId: testOrg.id } })
+      ])
 
       return NextResponse.json({
-        toneProfiles: mockToneProfiles,
+        toneProfiles,
         pagination: {
           page,
           limit,
-          total: 2,
-          pages: 1
+          total,
+          pages: Math.ceil(total / limit)
         }
       })
     }
@@ -135,20 +145,52 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // For testing, return mock success
+    // Use real database operations for testing
     if (BYPASS_AUTH) {
-      const mockToneProfile = {
-        id: Date.now().toString(),
-        name,
-        description: description || null,
-        settings,
-        isActive: isActive !== undefined ? isActive : true,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-        createdBy: { name: 'Test User', email: 'test@example.com' }
+      // Create a test user and org if they don't exist
+      let testUser = await prisma.user.findFirst({
+        where: { email: 'test@example.com' }
+      })
+      
+      if (!testUser) {
+        testUser = await prisma.user.create({
+          data: {
+            email: 'test@example.com',
+            name: 'Test User'
+          }
+        })
       }
 
-      return NextResponse.json({ toneProfile: mockToneProfile }, { status: 201 })
+      let testOrg = await prisma.org.findFirst({
+        where: { name: 'Test Organization' }
+      })
+
+      if (!testOrg) {
+        testOrg = await prisma.org.create({
+          data: {
+            name: 'Test Organization',
+            memberships: {
+              create: {
+                userId: testUser.id,
+                role: 'OWNER'
+              }
+            }
+          }
+        })
+      }
+
+      // Create tone profile in database
+      const toneProfile = await prisma.toneProfile.create({
+        data: {
+          name,
+          description: description || null,
+          settings,
+          orgId: testOrg.id
+        }
+      })
+
+      console.log('✅ Tone profile created successfully:', toneProfile.id)
+      return NextResponse.json({ toneProfile }, { status: 201 })
     }
 
     // Original authenticated logic

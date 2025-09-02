@@ -211,3 +211,5 @@ npx tsc --noEmit
 
 **Start with Phase 1 testing - you can thoroughly validate 80% of your app without spending anything!**
 
+
+

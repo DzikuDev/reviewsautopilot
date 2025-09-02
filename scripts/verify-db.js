@@ -103,3 +103,5 @@ console.log('4. Test database operations in the app\n');
 console.log('🔍 Want to see your database in action?');
 console.log('   npm run db:studio\n');
 
+
+

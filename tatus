@@ -1,0 +1,10 @@
+[33m5f85eb9[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m)[m docs: add repository guidelines, contributing guide, and PR template
+[33m63b4a27[m feat: Complete database setup and organization creation
+[33m7318a49[m feat: Complete Reviews Autopilot application with modern UI and core features
+[33m4d6b196[m Merge pull request #3 from DzikuDev/feat/db-and-integrations-setup
+[33m9a228ef[m[33m ([m[1;31morigin/feat/db-and-integrations-setup[m[33m)[m Fix user id type checking and handle missing user id in integrations
+[33mc9e10af[m Checkpoint before follow-up message
+[33m30b2a86[m Merge pull request #2 from DzikuDev/cursor/project-overview-and-missing-parts-identification-9fd2
+[33m2e03a01[m[33m ([m[1;31morigin/cursor/project-overview-and-missing-parts-identification-9fd2[m[33m)[m Update Prisma schema with new relations and model fields
+[33m93cea2e[m Refactor auth, add UI components, and improve type safety (#1)
+[33m2b85b40[m Refactor auth, add UI components, and improve type safety

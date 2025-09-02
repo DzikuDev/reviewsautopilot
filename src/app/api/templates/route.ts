@@ -20,42 +20,58 @@ export async function GET(request: NextRequest) {
     const limit = parseInt(searchParams.get('limit') || '20')
     const offset = (page - 1) * limit
 
-    // For testing, return mock data instead of database queries
+    // Use real database queries for testing
     if (BYPASS_AUTH) {
-      const mockTemplates = [
-        {
-          id: '1',
-          name: 'Thank You for Positive Review',
-          content: 'Thank you so much for your wonderful review, {customerName}! We\'re thrilled that you had such a positive experience with us. Your feedback means the world to our team and motivates us to continue providing excellent service.',
-          description: 'Use for 4-5 star reviews to show appreciation',
-          minStars: 4,
-          maxStars: 5,
-          isActive: true,
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-          createdBy: { name: 'Test User', email: 'test@example.com' }
-        },
-        {
-          id: '2',
-          name: 'Addressing Concerns',
-          content: 'Thank you for taking the time to share your feedback, {customerName}. We take all reviews seriously and appreciate you bringing this to our attention. We\'re committed to improving our service and would love the opportunity to make things right.',
-          description: 'Use for 1-3 star reviews to show commitment to improvement',
-          minStars: 1,
-          maxStars: 3,
-          isActive: true,
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-          createdBy: { name: 'Test User', email: 'test@example.com' }
-        }
-      ]
+      // Create a test user and org if they don't exist
+      let testUser = await prisma.user.findFirst({
+        where: { email: 'test@example.com' }
+      })
+      
+      if (!testUser) {
+        testUser = await prisma.user.create({
+          data: {
+            email: 'test@example.com',
+            name: 'Test User'
+          }
+        })
+      }
+
+      let testOrg = await prisma.org.findFirst({
+        where: { name: 'Test Organization' }
+      })
+
+      if (!testOrg) {
+        testOrg = await prisma.org.create({
+          data: {
+            name: 'Test Organization',
+            memberships: {
+              create: {
+                userId: testUser.id,
+                role: 'OWNER'
+              }
+            }
+          }
+        })
+      }
+
+      // Fetch templates with pagination
+      const [templates, total] = await Promise.all([
+        prisma.template.findMany({
+          where: { orgId: testOrg.id },
+          orderBy: { createdAt: 'desc' },
+          skip: offset,
+          take: limit
+        }),
+        prisma.template.count({ where: { orgId: testOrg.id } })
+      ])
 
       return NextResponse.json({
-        templates: mockTemplates,
+        templates,
         pagination: {
           page,
           limit,
-          total: 2,
-          pages: 1
+          total,
+          pages: Math.ceil(total / limit)
         }
       })
     }
@@ -129,22 +145,54 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // For testing, return mock success
+    // Use real database operations for testing
     if (BYPASS_AUTH) {
-      const mockTemplate = {
-        id: Date.now().toString(),
-        name,
-        content,
-        description: description || null,
-        minStars: minStars || null,
-        maxStars: maxStars || null,
-        isActive: isActive !== undefined ? isActive : true,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-        createdBy: { name: 'Test User', email: 'test@example.com' }
+      // Create a test user and org if they don't exist
+      let testUser = await prisma.user.findFirst({
+        where: { email: 'test@example.com' }
+      })
+      
+      if (!testUser) {
+        testUser = await prisma.user.create({
+          data: {
+            email: 'test@example.com',
+            name: 'Test User'
+          }
+        })
       }
 
-      return NextResponse.json({ template: mockTemplate }, { status: 201 })
+      let testOrg = await prisma.org.findFirst({
+        where: { name: 'Test Organization' }
+      })
+
+      if (!testOrg) {
+        testOrg = await prisma.org.create({
+          data: {
+            name: 'Test Organization',
+            memberships: {
+              create: {
+                userId: testUser.id,
+                role: 'OWNER'
+              }
+            }
+          }
+        })
+      }
+
+      // Create template in database
+      const template = await prisma.template.create({
+        data: {
+          name,
+          content,
+          description: description || null,
+          minStars: minStars || null,
+          maxStars: maxStars || null,
+          orgId: testOrg.id
+        }
+      })
+
+      console.log('✅ Template created successfully:', template.id)
+      return NextResponse.json({ template }, { status: 201 })
     }
 
     // Original authenticated logic
