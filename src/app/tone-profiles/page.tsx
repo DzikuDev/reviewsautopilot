@@ -25,10 +25,10 @@ interface ToneProfile {
   }
   isActive: boolean
   createdAt: string
-  createdBy: {
+  createdBy?: {
     name?: string | null
     email?: string | null
-  }
+  } | null
 }
 
 interface ToneProfilesResponse {
@@ -417,7 +417,7 @@ export default function ToneProfilesPage() {
                       
                       <div className="pt-2 border-t border-gray-200 dark:border-gray-700">
                         <div className="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400">
-                          <span>Created by {profile.createdBy.name || profile.createdBy.email}</span>
+                          <span>Created by {profile.createdBy?.name || profile.createdBy?.email || 'Unknown'}</span>
                           <span>{new Date(profile.createdAt).toLocaleDateString()}</span>
                         </div>
                       </div>

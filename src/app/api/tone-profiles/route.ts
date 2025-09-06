@@ -36,9 +36,8 @@ export async function GET(request: NextRequest) {
         })
       }
 
-      let testOrg = await prisma.org.findFirst({
-        where: { name: 'Test Organization' }
-      })
+      // Get the first available organization or create one
+      let testOrg = await prisma.org.findFirst()
 
       if (!testOrg) {
         testOrg = await prisma.org.create({
@@ -52,12 +51,32 @@ export async function GET(request: NextRequest) {
             }
           }
         })
+      } else {
+        // Add test user to existing organization if not already a member
+        const existingMembership = await prisma.membership.findFirst({
+          where: { userId: testUser.id, orgId: testOrg.id }
+        })
+        
+        if (!existingMembership) {
+          await prisma.membership.create({
+            data: {
+              userId: testUser.id,
+              orgId: testOrg.id,
+              role: 'MEMBER'
+            }
+          })
+        }
       }
 
       // Fetch tone profiles with pagination
       const [toneProfiles, total] = await Promise.all([
         prisma.toneProfile.findMany({
           where: { orgId: testOrg.id },
+          include: {
+            createdBy: {
+              select: { name: true, email: true }
+            }
+          },
           orderBy: { createdAt: 'desc' },
           skip: offset,
           take: limit
@@ -161,9 +180,8 @@ export async function POST(request: NextRequest) {
         })
       }
 
-      let testOrg = await prisma.org.findFirst({
-        where: { name: 'Test Organization' }
-      })
+      // Get the first available organization or create one
+      let testOrg = await prisma.org.findFirst()
 
       if (!testOrg) {
         testOrg = await prisma.org.create({
@@ -177,6 +195,21 @@ export async function POST(request: NextRequest) {
             }
           }
         })
+      } else {
+        // Add test user to existing organization if not already a member
+        const existingMembership = await prisma.membership.findFirst({
+          where: { userId: testUser.id, orgId: testOrg.id }
+        })
+        
+        if (!existingMembership) {
+          await prisma.membership.create({
+            data: {
+              userId: testUser.id,
+              orgId: testOrg.id,
+              role: 'MEMBER'
+            }
+          })
+        }
       }
 
       // Create tone profile in database
@@ -185,7 +218,13 @@ export async function POST(request: NextRequest) {
           name,
           description: description || null,
           settings,
-          orgId: testOrg.id
+          orgId: testOrg.id,
+          createdById: testUser.id
+        },
+        include: {
+          createdBy: {
+            select: { name: true, email: true }
+          }
         }
       })
 

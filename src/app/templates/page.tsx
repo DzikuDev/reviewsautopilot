@@ -22,10 +22,10 @@ interface Template {
   isActive: boolean
   createdAt: string
   updatedAt: string
-  createdBy: {
+  createdBy?: {
     name: string
     email: string
-  }
+  } | null
 }
 
 interface TemplatesResponse {
@@ -376,7 +376,7 @@ export default function TemplatesPage() {
                       </div>
                       
                       <div className="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400">
-                        <span>Created by {template.createdBy.name}</span>
+                        <span>Created by {template.createdBy?.name || 'Unknown'}</span>
                         <span>{new Date(template.createdAt).toLocaleDateString()}</span>
                       </div>
 

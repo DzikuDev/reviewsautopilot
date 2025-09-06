@@ -5,7 +5,15 @@
  * Tests all CRUD operations and API endpoints
  */
 
-const fetch = require('node-fetch');
+// Use built-in fetch (Node.js 18+) or fallback to node-fetch
+let fetch;
+try {
+  // Try built-in fetch first (Node.js 18+)
+  fetch = globalThis.fetch;
+} catch (error) {
+  // Fallback to node-fetch for older Node.js versions
+  fetch = require('node-fetch');
+}
 
 const BASE_URL = 'http://localhost:3000/api';
 

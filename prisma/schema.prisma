@@ -19,6 +19,8 @@ model User {
   memberships      Membership[]
   publishedReplies Reply[]      @relation("ReplyPublishedBy")
   sessions         Session[]
+  templates        Template[]   @relation("TemplateCreatedBy")
+  toneProfiles     ToneProfile[] @relation("ToneProfileCreatedBy")
 }
 
 model Org {
@@ -128,23 +130,35 @@ model Reply {
 }
 
 model Template {
-  id       String @id @default(cuid())
-  orgId    String
-  name     String
-  minStars Int?
-  maxStars Int?
-  content  String
-  org      Org    @relation(fields: [orgId], references: [id])
+  id          String    @id @default(cuid())
+  orgId       String
+  name        String
+  description String?
+  content     String
+  minStars    Int?
+  maxStars    Int?
+  isActive    Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  createdById String?
+  org         Org       @relation(fields: [orgId], references: [id])
+  createdBy   User?     @relation("TemplateCreatedBy", fields: [createdById], references: [id])
 }
 
 model ToneProfile {
-  id              String   @id @default(cuid())
+  id              String    @id @default(cuid())
   orgId           String
   name            String
+  description     String?
   settings        Json
+  isActive        Boolean   @default(true)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  createdById     String?
   bannedPhrases   String[]
   requiredPhrases String[]
-  org             Org      @relation(fields: [orgId], references: [id])
+  org             Org       @relation(fields: [orgId], references: [id])
+  createdBy       User?     @relation("ToneProfileCreatedBy", fields: [createdById], references: [id])
 }
 
 model EscalationRule {
